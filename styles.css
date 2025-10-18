@@ -1,0 +1,56 @@
+body {
+    background-image: url('images/newDarkStone.png');
+    background-size: cover;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    margin: 0;
+    padding: 0;
+    color: rgb(255, 217, 229);
+    font-family: 'CustomFont', sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+@font-face {
+    font-family: 'CustomFont';
+    src: url('../fonts/MinecraftRegular-Bmg3.otf');
+    font-weight: normal;
+    font-style: normal;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.centered-image {
+    max-width: 50%;
+    height: auto;
+    margin-bottom: 20px;
+}
+
+.info-section {
+    margin-top: 20px;
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+.info-section p {
+    margin: 10px 0;
+}
+
+.info-section a {
+    color: rgb(255, 217, 229);
+    text-decoration: none;
+    border-bottom: 2px solid rgb(255, 217, 229);
+    transition: opacity 0.3s ease;
+}
+
+.info-section a:hover {
+    opacity: 0.8;
+}
