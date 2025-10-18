@@ -1,33 +1,43 @@
 addEventListener("fetch", event => {
-    event.respondWith(handleRequest(event.request));
+  event.respondWith(handleRequest(event.request));
 });
 
 async function handleRequest(request) {
-    // Try the origin
-    const fetchPromise = fetch(request);
-    const timeoutPromise = new Promise(resolve => setTimeout(resolve, 4000));
-    const response = await Promise.race([fetchPromise, timeoutPromise]);
+  const timeout = 4000; // 4 seconds
 
-    // If we got a response, check its status
-    if (response) {
-        if (response.status >= 500) {
-            const failoverURL = new URL(request.url);
-            failoverURL.hostname = "down.choculaterie.com";
-            return fetch(failoverURL.toString(), {
-                ...request,
-                cf: { resolveOverride: "choculaterie.com" },
-            });
-        }
+  try {
+    // Try fetching the origin with timeout
+    const originResponse = await Promise.race([
+      fetch(request),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Origin timeout")), timeout)
+      ),
+    ]);
 
-        // Origin is healthy — serve it
-        return response;
-    }
+    // Failover if origin returns 5xx
+    if (originResponse.status >= 500) throw new Error("Origin 5xx");
 
-    // Timeout or no response — failover
-    const failoverURL = new URL(request.url);
-    failoverURL.hostname = "down.choculaterie.com";
-    return fetch(failoverURL.toString(), {
-        ...request,
+    // Origin is healthy — return its response
+    return originResponse;
+
+  } catch (err) {
+    // Origin failed — serve failover page at root
+    try {
+      const failoverURL = new URL(request.url);
+      failoverURL.hostname = "down.choculaterie.com";
+      failoverURL.pathname = "/";             // always fetch root
+
+      return await fetch(failoverURL.toString(), {
         cf: { resolveOverride: "choculaterie.com" },
-    });
+        redirect: "follow",
+      });
+
+    } catch (failoverErr) {
+      // Failover unreachable — return a simple offline page
+      return new Response(
+        `<html><body><h1>Site is temporarily down</h1><p>Please try again later.</p></body></html>`,
+        { status: 503, headers: { "Content-Type": "text/html" } }
+      );
+    }
+  }
 }
