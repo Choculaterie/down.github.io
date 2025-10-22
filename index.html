@@ -5,11 +5,134 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Choculaterie is down!</title>
-    <link rel="stylesheet" href="/styles.css">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
 </head>
 
 <body>
+
+    <style>
+        body {
+            background-image: url('images/newDarkStone.png');
+            background-size: cover;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            margin: 0;
+            padding: 0;
+            color: rgb(255, 217, 229);
+            font-family: 'CustomFont', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        @font-face {
+            font-family: 'CustomFont';
+            src: url('../fonts/MinecraftRegular-Bmg3.otf');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .centered-image {
+            max-width: 50%;
+            height: auto;
+            margin-bottom: 20px;
+        }
+
+        .info-section {
+            margin-top: 20px;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        .info-section p {
+            margin: 10px 0;
+        }
+
+        .info-section a {
+            color: rgb(255, 217, 229);
+            text-decoration: none;
+            border-bottom: 2px solid rgb(255, 217, 229);
+            transition: opacity 0.3s ease;
+        }
+
+        .info-section a:hover {
+            opacity: 0.8;
+        }
+
+        .image-wrapper {
+            position: relative;
+            display: inline-block;
+            margin: 20px 0;
+        }
+
+        .discord-status {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .avatar-container {
+            position: relative;
+            margin-bottom: 10px;
+        }
+
+        .discord-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 3px solid rgb(255, 217, 229);
+            display: block;
+        }
+
+        .discord-text {
+            font-size: 12px;
+            margin: 0;
+            text-align: center;
+            max-width: 140px;
+            line-height: 1.4;
+        }
+
+        .status-indicator {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 3px solid rgb(255, 217, 229);
+            background-color: #888;
+        }
+
+        .status-indicator.online {
+            background-color: #43b581;
+        }
+
+        .status-indicator.idle {
+            background-color: #faa61a;
+        }
+
+        .status-indicator.dnd {
+            background-color: #f04747;
+        }
+
+        .status-indicator.offline {
+            background-color: #747f8d;
+        }
+    </style>
+
     <div class="discord-status">
         <div class="avatar-container">
             <img id="discordAvatar" class="discord-avatar" alt="Discord Avatar">
@@ -31,7 +154,40 @@
                     target="_blank">support@choculaterie.com</a></p>
         </div>
     </div>
-    <script src="/scripts.js"></script>
+
+    <script>
+        // Fetch Discord status from Lanyard API
+        const DISCORD_USER_ID = '1178712273901068374';
+        const LANYARD_API = `https://api.lanyard.rest/v1/users/${DISCORD_USER_ID}`;
+
+        async function fetchDiscordStatus() {
+            try {
+                const response = await fetch(LANYARD_API);
+                const data = await response.json();
+
+                if (data.success) {
+                    // Set avatar
+                    const avatarHash = data.data.discord_user.avatar;
+                    const avatarUrl = `https://cdn.discordapp.com/avatars/${DISCORD_USER_ID}/${avatarHash}.png`;
+                    document.getElementById('discordAvatar').src = avatarUrl;
+
+                    // Set status indicator
+                    const status = data.data.discord_status;
+                    const statusIndicator = document.getElementById('statusIndicator');
+                    statusIndicator.className = `status-indicator ${status}`;
+                }
+            } catch (error) {
+                console.error('Error fetching Discord status:', error);
+            }
+        }
+
+        // Fetch status on page load
+        fetchDiscordStatus();
+
+        // Update status every 30 seconds
+        setInterval(fetchDiscordStatus, 30000);
+
+    </script>
 </body>
 
 </html>
