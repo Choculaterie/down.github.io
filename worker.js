@@ -4,17 +4,9 @@ addEventListener("fetch", event => {
 
 async function handleRequest(request) {
   const timeout = 4000; // 4 seconds
-  const url = new URL(request.url);
 
-  // 1. Route CSS & JS requests directly to litematic.org
-  if (url.pathname.endsWith(".css") || url.pathname.endsWith(".js") || url.pathname.endsWith(".png")) {
-    const assetURL = new URL(request.url);
-    assetURL.hostname = "litematic.org";
-    return fetch(assetURL.toString());
-  }
-
-  // 2. Try fetching from choculaterie.com (main origin)
   try {
+    // Try fetching the origin with timeout
     const originResponse = await Promise.race([
       fetch(request),
       new Promise((_, reject) =>
@@ -22,29 +14,28 @@ async function handleRequest(request) {
       ),
     ]);
 
+    // Failover if origin returns 5xx
     if (originResponse.status >= 500) throw new Error("Origin 5xx");
 
+    // Origin is healthy — return its response
     return originResponse;
 
   } catch (err) {
-    // 3. Failover: serve the ROOT of litematic.org
+    // Origin failed — serve failover page at root
     try {
-      const failoverURL = new URL("https://litematic.org/");
-      // Always fetch root (not /users/...)
-      const failoverResponse = await fetch(failoverURL.toString(), {
+      const failoverURL = new URL(request.url);
+      failoverURL.hostname = "down.choculaterie.com";
+      failoverURL.pathname = "/";             // always fetch root
+
+      return await fetch(failoverURL.toString(), {
+        cf: { resolveOverride: "choculaterie.com" },
         redirect: "follow",
       });
 
-      // Return content but keep the user's URL
-      return new Response(await failoverResponse.text(), {
-        status: 200,
-        headers: { "Content-Type": "text/html" },
-      });
-
-    } catch {
-      // 4. Last fallback: simple offline page
+    } catch (failoverErr) {
+      // Failover unreachable — return a simple offline page
       return new Response(
-        `<html><body><h1>Site temporarily down</h1><p>Please try again later.</p></body></html>`,
+        `<html><body><h1>Site is temporarily down</h1><p>Please try again later.</p></body></html>`,
         { status: 503, headers: { "Content-Type": "text/html" } }
       );
     }
