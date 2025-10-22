@@ -24,7 +24,7 @@ async function handleRequest(request) {
     // Origin failed — serve failover page at root
     try {
       const failoverURL = new URL(request.url);
-      failoverURL.hostname = "down.choculaterie.com";
+      failoverURL.hostname = "litematic.org";
       failoverURL.pathname = "/";             // always fetch root
 
       return await fetch(failoverURL.toString(), {
